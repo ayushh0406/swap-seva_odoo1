@@ -109,4 +109,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Thanks to all contributors who have helped with this project 
+- Thanks to all contributors who have helped with this project
