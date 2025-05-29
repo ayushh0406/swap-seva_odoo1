@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Phone, PhoneOff, Video } from "lucide-react"
 import { io, Socket } from "socket.io-client"
 import VideoCall from "./VideoCall"
+import { SOCKET_URL } from "@/lib/api-config"
 
 type IncomingCallProps = {
   onAccept: (callerId: string, callType: "video" | "audio") => void
@@ -29,7 +30,7 @@ export default function IncomingCallHandler({ onAccept, onReject }: IncomingCall
     if (!token) return
     
     // Connect to socket server
-    const newSocket = io("http://localhost:3001", {
+    const newSocket = io(SOCKET_URL, {
       auth: { token }
     })
     

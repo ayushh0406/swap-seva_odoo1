@@ -37,17 +37,17 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins
+    origin: FRONTEND_URL, // Use the frontend URL from environment
     methods: ["GET", "POST"],
-    // Removed credentials for simplicity
+    credentials: true,
   },
 });
 
 // Middleware
 app.use(cors({
-  origin: "*", // Allow all origins
+  origin: FRONTEND_URL, // Use the frontend URL from environment
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  // Removed credentials
+  credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json({ limit: '50mb' }));

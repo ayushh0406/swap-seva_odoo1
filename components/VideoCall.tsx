@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react"
 import { io, Socket } from "socket.io-client"
 import Peer from "simple-peer"
+import { SOCKET_URL } from "@/lib/api-config"
 
 type VideoCallProps = {
   isOpen: boolean
@@ -42,7 +43,7 @@ export default function VideoCall({
     const token = localStorage.getItem("authToken")
     if (!token) return
     
-    socketRef.current = io("http://localhost:3001", {
+    socketRef.current = io(SOCKET_URL, {
       auth: { token }
     })
     
