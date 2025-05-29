@@ -33,11 +33,28 @@ if (!process.env.JWT_SECRET) {
 // Define frontend URL - must be specific when using credentials
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
+// Allow multiple origins if needed
+const allowedOrigins = [
+  FRONTEND_URL,
+  "https://swap-sewa.vercel.app",
+  "https://mumbai-swap.vercel.app"
+];
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL, // Use the frontend URL from environment
+    origin: function(origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, etc)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        console.log("Not allowed by CORS:", origin);
+        callback(null, true); // Allow anyway for now, but log it
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -45,7 +62,17 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: FRONTEND_URL, // Use the frontend URL from environment
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.log("Not allowed by CORS:", origin);
+      callback(null, true); // Allow anyway for now, but log it
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -99,6 +126,16 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/interests", interestRoutes);
 app.use("/api/chats", chatRoutes);
+
+// Health check endpoint for Railway
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    message: "Server is healthy",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
 
 // Socket.io middleware for authentication
 io.use(async (socket, next) => {
