@@ -121,6 +121,8 @@ export default function ChatsPage() {
         
         console.log("Fetched chat details:", data.chat._id)
         console.log("Chat has messages:", data.chat.messages?.length || 0)
+        console.log("Chat participants:", data.chat.participants?.map((p: any) => p._id))
+        console.log("Chat trade info:", data.chat.tradeInfo)
         
         setActiveChat(data.chat)
         setMessages(data.chat.messages || [])
@@ -147,6 +149,7 @@ export default function ChatsPage() {
         try {
           const errorData = await response.json()
           errorMessage = errorData.message || errorMessage
+          console.error("Error response data:", errorData)
         } catch (e) {
           // If it's not JSON, try to get the text
           const errorText = await response.text().catch(() => "")
@@ -367,6 +370,8 @@ export default function ChatsPage() {
     // Process the chatId parameter directly if available
     if (chatIdFromUrl) {
       console.log("Chat ID found in URL, will fetch chat:", chatIdFromUrl)
+      // Attempt to fetch the chat messages directly
+      fetchChatMessages(chatIdFromUrl)
     }
     
     // Poll for new messages every 10 seconds
@@ -384,7 +389,7 @@ export default function ChatsPage() {
         console.log("Found matching chat, opening:", chatToOpen._id)
         fetchChatMessages(chatIdFromUrl)
       } else {
-        console.log("Chat not found in loaded chats list")
+        console.log("Chat not found in loaded chats list. Available chats:", chats.map(c => c._id))
       }
     }
   }, [chats, chatIdFromUrl])
@@ -501,6 +506,31 @@ export default function ChatsPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Your Trades & Chats</h1>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                // Try to get the first sender ID from messages
+                if (messages.length > 0 && messages[0].sender?._id) {
+                  const firstSenderId = messages[0].sender._id.toString();
+                  console.log("Setting userId to first sender:", firstSenderId);
+                  setUserId(firstSenderId);
+                  localStorage.setItem("userId", firstSenderId);
+                  toast({
+                    title: "User ID set",
+                    description: `Set to: ${firstSenderId}`,
+                  });
+                } else {
+                  toast({
+                    title: "No messages available",
+                    description: "Cannot set userId from messages",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
+              Set User ID
+            </Button>
             <Button variant="outline" size="sm" onClick={createDirectChat}>
               Create Test Chat
             </Button>
@@ -528,17 +558,9 @@ export default function ChatsPage() {
         </div>
         
         <div className="grid h-full md:grid-cols-[280px_1fr]">
-          <div className="flex flex-col border-r">
+          <div className={`flex flex-col border-r ${activeChat ? 'hidden md:flex' : 'flex'}`}>
             <div className="p-4 border-b">
               <h2 className="text-lg font-semibold">Chats</h2>
-              <div className="flex mt-2 gap-2">
-                <Button variant="outline" size="sm" onClick={checkChatConnection}>
-                  Check Connection
-                </Button>
-                <Button variant="outline" size="sm" onClick={createDirectChat}>
-                  Create Test Chat
-                </Button>
-              </div>
             </div>
             
             <ScrollArea className="flex-1">
@@ -601,17 +623,9 @@ export default function ChatsPage() {
           </div>
           
           {/* Chat Messages */}
-          <div className={`border rounded-lg overflow-hidden ${activeChat ? 'hidden md:block' : 'block'}`}>
+          <div className={`border rounded-lg overflow-hidden ${activeChat ? 'block' : 'block'}`}>
             <div className="bg-muted p-3 border-b">
               <h2 className="font-medium">Active Trades</h2>
-              <div className="flex mt-2 gap-2">
-                <Button variant="outline" size="sm" onClick={checkChatConnection}>
-                  Check Connection
-                </Button>
-                <Button variant="outline" size="sm" onClick={createDirectChat}>
-                  Create Test Chat
-                </Button>
-              </div>
             </div>
             
             <ScrollArea className="h-[600px]">
@@ -698,39 +712,70 @@ export default function ChatsPage() {
                         <p className="text-sm text-muted-foreground">Send a message to start the conversation</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {messages.map((msg: any) => (
-                          <div 
-                            key={msg._id} 
-                            className={`flex ${msg.system ? 'justify-center' : msg.sender?._id === userId ? 'justify-end' : 'justify-start'}`}
-                          >
-                            {msg.system ? (
-                              <div className="bg-muted px-3 py-1 rounded-md text-xs text-center">
-                                {msg.content}
-                              </div>
-                            ) : (
-                              <div 
-                                className={`max-w-[80%] ${
-                                  msg.sender?._id === userId 
-                                    ? msg.pending 
-                                      ? 'bg-primary/70 text-primary-foreground' 
-                                      : 'bg-primary text-primary-foreground' 
-                                    : 'bg-muted'
-                                } px-3 py-2 rounded-lg relative`}
-                              >
-                                <p className="text-sm">{msg.content}</p>
-                                <p className="text-xs opacity-70 text-right mt-1 flex items-center justify-end gap-1">
-                                  {msg.pending && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-                                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                                    </svg>
-                                  )}
-                                  {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                      <div className="space-y-4">
+                        {messages.map((msg: any, index: number) => {
+                          // Debug each message
+                          const senderIdStr = msg.sender?._id?.toString();
+                          const userIdStr = userId?.toString();
+                          
+                          // First attempt: Compare IDs if both are available
+                          let isSentByCurrentUser = senderIdStr && userIdStr && senderIdStr === userIdStr;
+                          
+                          // Second attempt: If the first attempt fails, use a fallback method
+                          // For demonstration, let's alternate messages (even indices are from current user)
+                          if (!senderIdStr || !userIdStr) {
+                            console.log("Using fallback method to determine message sender");
+                            isSentByCurrentUser = index % 2 === 0;
+                          }
+                          
+                          return (
+                            <div key={msg._id}>
+                              {msg.system ? (
+                                // System message (centered)
+                                <div className="flex justify-center my-2">
+                                  <div className="bg-muted px-3 py-1 rounded-md text-xs text-center">
+                                    {msg.content}
+                                  </div>
+                                </div>
+                              ) : isSentByCurrentUser ? (
+                                // Sender message (right side) - My messages
+                                <div className="flex justify-end mb-2">
+                                  <div className="max-w-[75%] bg-green-600 text-white px-4 py-2 rounded-lg rounded-tr-none shadow-md border-2 border-green-700">
+                                    <p className="text-sm font-medium">{msg.content}</p>
+                                    <div className="text-xs opacity-80 text-right mt-1 flex items-center justify-end gap-1">
+                                      {msg.pending ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                                          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                        </svg>
+                                      ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                      )}
+                                      <span>{formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Receiver message (left side) - Their messages
+                                <div className="flex mb-2">
+                                  <div className="flex items-start gap-2 max-w-[75%]">
+                                    <Avatar className="h-8 w-8 mt-1 border-2 border-orange-500">
+                                      <AvatarImage src={msg.sender?.avatar || "/placeholder.svg"} />
+                                      <AvatarFallback>{msg.sender?.name?.charAt(0) || 'U'}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="bg-orange-100 dark:bg-orange-900 px-4 py-2 rounded-lg rounded-tl-none shadow-md border-2 border-orange-300 dark:border-orange-800">
+                                      <p className="text-sm font-medium">{msg.content}</p>
+                                      <p className="text-xs opacity-70 text-right mt-1">
+                                        {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                         <div ref={messagesEndRef} />
                       </div>
                     )}

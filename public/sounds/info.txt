@@ -1,0 +1,6 @@
+This directory contains sound files used by the application.
+
+Required files:
+- ringtone.mp3: A ringtone sound for incoming calls
+
+You can download a free ringtone sound and place it in this directory with the name "ringtone.mp3". 

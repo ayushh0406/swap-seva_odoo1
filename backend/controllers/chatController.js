@@ -20,28 +20,12 @@ export const getUserChats = async (req, res) => {
       console.log('No chats found for user');
     } else {
       console.log('Chat IDs:', chats.map(chat => chat._id));
-      
-      // Log chat details for debugging
-      chats.forEach(chat => {
-        console.log(`Chat ${chat._id} details:`, {
-          participants: chat.participants.map(p => ({
-            id: p._id,
-            name: p.name
-          })),
-          tradeInfo: chat.tradeInfo ? {
-            status: chat.tradeInfo.status,
-            initiatorOffering: chat.tradeInfo.initiatorOffering ? 
-              (chat.tradeInfo.initiatorOffering.title || 'Unknown offering') : 'Missing offering',
-            responderOffering: chat.tradeInfo.responderOffering ?
-              (chat.tradeInfo.responderOffering.title || 'Unknown offering') : 'Missing offering'
-          } : 'No trade info',
-          lastMessageTime: chat.lastMessage?.timestamp || chat.updatedAt
-        });
-      });
     }
     
-    // Format the response
-    const formattedChats = chats.map(chat => {
+    // Group chats by trade partner to avoid duplicates
+    const chatsByPartner = new Map();
+    
+    chats.forEach(chat => {
       // Find the other participant
       const otherParticipant = chat.participants.find(
         p => p._id.toString() !== req.user._id.toString()
@@ -49,7 +33,32 @@ export const getUserChats = async (req, res) => {
       
       if (!otherParticipant) {
         console.log('Warning: Other participant not found in chat:', chat._id);
+        return;
       }
+      
+      const partnerId = otherParticipant._id.toString();
+      
+      // If we already have a chat with this partner, keep only the most recent one
+      if (chatsByPartner.has(partnerId)) {
+        const existingChat = chatsByPartner.get(partnerId);
+        const existingDate = new Date(existingChat.updatedAt);
+        const currentDate = new Date(chat.updatedAt);
+        
+        // Replace only if this chat is more recent
+        if (currentDate > existingDate) {
+          chatsByPartner.set(partnerId, chat);
+        }
+      } else {
+        chatsByPartner.set(partnerId, chat);
+      }
+    });
+    
+    // Format the response
+    const formattedChats = Array.from(chatsByPartner.values()).map(chat => {
+      // Find the other participant
+      const otherParticipant = chat.participants.find(
+        p => p._id.toString() !== req.user._id.toString()
+      );
       
       return {
         _id: chat._id,
@@ -78,6 +87,7 @@ export const getUserChats = async (req, res) => {
 export const getChatById = async (req, res) => {
   try {
     const { chatId } = req.params;
+    console.log('Getting chat by ID:', chatId, 'for user:', req.user._id);
     
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       return res.status(400).json({
@@ -92,6 +102,7 @@ export const getChatById = async (req, res) => {
       .populate('messages.sender', 'name avatar');
     
     if (!chat) {
+      console.log('Chat not found with ID:', chatId);
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
@@ -100,6 +111,7 @@ export const getChatById = async (req, res) => {
     
     // Check if user is a participant
     if (!chat.participants.some(p => p._id.toString() === req.user._id.toString())) {
+      console.log('User not authorized to access chat:', req.user._id);
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to access this chat'
@@ -110,6 +122,31 @@ export const getChatById = async (req, res) => {
     if (chat.unreadCount.has(req.user._id.toString())) {
       chat.unreadCount.set(req.user._id.toString(), 0);
       await chat.save();
+    }
+    
+    // Debug message structure
+    if (chat.messages && chat.messages.length > 0) {
+      const firstMessage = chat.messages[0];
+      const senderIdStr = firstMessage.sender?._id?.toString();
+      const currentUserIdStr = req.user._id.toString();
+      
+      console.log('First message structure:', {
+        id: firstMessage._id,
+        content: firstMessage.content,
+        sender: senderIdStr,
+        currentUser: currentUserIdStr,
+        isSentByCurrentUser: senderIdStr === currentUserIdStr,
+        senderType: typeof senderIdStr,
+        currentUserType: typeof currentUserIdStr
+      });
+      
+      // Log all messages for debugging
+      console.log('All messages:', chat.messages.map(msg => ({
+        id: msg._id,
+        content: msg.content.substring(0, 20) + (msg.content.length > 20 ? '...' : ''),
+        sender: msg.sender?._id?.toString(),
+        isSentByCurrentUser: msg.sender?._id?.toString() === req.user._id.toString()
+      })));
     }
     
     res.status(200).json({
@@ -170,6 +207,12 @@ export const sendMessage = async (req, res) => {
       timestamp: new Date(),
       read: false
     };
+    
+    console.log('Creating new message:', {
+      senderId: req.user._id.toString(),
+      senderIdType: typeof req.user._id,
+      content: content.substring(0, 20) + (content.length > 20 ? '...' : '')
+    });
     
     // Add message to chat
     chat.messages.push(message);

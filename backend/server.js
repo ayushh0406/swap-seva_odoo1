@@ -17,6 +17,7 @@ import messageRoutes from "./routes/messageRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import skillRoutes from "./routes/skillRoutes.js";
 import interestRoutes from "./routes/interestRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 
 // Middleware imports
 import { authenticateUser } from "./middlewares/authMiddleware.js";
@@ -97,6 +98,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/interests", interestRoutes);
+app.use("/api/chats", chatRoutes);
 
 // Socket.io middleware for authentication
 io.use(async (socket, next) => {
@@ -161,12 +163,65 @@ io.on("connection", (socket) => {
   
   // Handle video/audio call signaling
   socket.on("call-signal", ({ to, signal, callType }) => {
+    console.log(`Call signal from ${socket.userId} to ${to}, type: ${callType}`)
     io.to(`user-${to}`).emit("call-signal", {
       from: socket.userId,
       signal,
       callType
-    });
-  });
+    })
+  })
+  
+  // User initiating a call
+  socket.on("initiate-call", async ({ to, callType }) => {
+    try {
+      // Get caller user info to send to recipient
+      const user = await mongoose.model('User').findById(socket.userId).select('name avatar').lean()
+      
+      console.log(`Call initiated from ${user.name} (${socket.userId}) to ${to}, type: ${callType}`)
+      
+      io.to(`user-${to}`).emit("incoming-call", {
+        from: socket.userId,
+        name: user.name,
+        avatar: user.avatar,
+        callType
+      })
+    } catch (error) {
+      console.error("Error initiating call:", error)
+    }
+  })
+  
+  // Call accepted
+  socket.on("call-accepted", ({ to, callType }) => {
+    console.log(`Call accepted by ${socket.userId}, notifying ${to}`)
+    io.to(`user-${to}`).emit("call-accepted", {
+      from: socket.userId,
+      callType
+    })
+  })
+  
+  // Call rejected
+  socket.on("call-rejected", ({ to }) => {
+    console.log(`Call rejected by ${socket.userId}, notifying ${to}`)
+    io.to(`user-${to}`).emit("call-rejected", {
+      from: socket.userId
+    })
+  })
+  
+  // Call ended
+  socket.on("call-ended", ({ to }) => {
+    console.log(`Call ended by ${socket.userId}, notifying ${to}`)
+    io.to(`user-${to}`).emit("call-ended", {
+      from: socket.userId
+    })
+  })
+  
+  // User is busy (already in another call)
+  socket.on("user-busy", ({ to }) => {
+    console.log(`User ${socket.userId} is busy, notifying ${to}`)
+    io.to(`user-${to}`).emit("user-busy", {
+      from: socket.userId
+    })
+  })
 });
 
 // Serve static assets in production
