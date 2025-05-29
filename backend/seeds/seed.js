@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt';
 dotenv.config();
 
 // Connect to database
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://panigrahibalram16:Ping420+@cluster0.ne7hd.mongodb.net/Swap_sewa?retryWrites=true&w=majority', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://id:pass@cluster0.ne7hd.mongodb.net/Swap_sewa?retryWrites=true&w=majority', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })

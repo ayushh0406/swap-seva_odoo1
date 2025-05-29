@@ -386,6 +386,9 @@ export const confirmTradeRequest = async (req, res) => {
     const initiator = await User.findById(notification.sender._id);
     const responder = await User.findById(notification.recipient._id);
     
+    console.log("Initiator found:", initiator ? initiator.name : "No");
+    console.log("Responder found:", responder ? responder.name : "No");
+    
     if (!initiator || !responder) {
       return res.status(404).json({
         success: false,
@@ -414,6 +417,14 @@ export const confirmTradeRequest = async (req, res) => {
     try {
       await chat.save();
       console.log("Chat created successfully:", chat._id);
+      
+      // Verify the chat was saved correctly
+      const savedChat = await Chat.findById(chat._id);
+      console.log("Chat verification - found in DB:", savedChat ? "Yes" : "No");
+      if (savedChat) {
+        console.log("Chat participants:", savedChat.participants.map(p => p.toString()));
+        console.log("Chat trade info status:", savedChat.tradeInfo?.status);
+      }
     } catch (saveError) {
       console.error("Error saving chat:", saveError);
       return res.status(500).json({

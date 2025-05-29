@@ -21,8 +21,8 @@ const navItems = [
     icon: <Search className="h-5 w-5" />,
   },
   {
-    title: "Chats",
-    href: "/dashboard/chats",
+    title: "Messages",
+    href: "/dashboard/messages",
     icon: <MessageSquare className="h-5 w-5" />,
   },
 ]

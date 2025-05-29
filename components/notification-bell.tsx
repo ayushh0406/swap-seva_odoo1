@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from "next/navigation"
 
 interface Notification {
   _id: string
@@ -46,6 +47,7 @@ export function NotificationBell() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedOfferingId, setSelectedOfferingId] = useState<string>("")
   const [userOfferings, setUserOfferings] = useState<any[]>([])
+  const router = useRouter()
 
   // Fetch notifications and unread count
   const fetchNotifications = async () => {
@@ -189,38 +191,27 @@ export function NotificationBell() {
       }
       
       // Mark notification as read
-      const markReadResponse = await fetch(`http://localhost:3001/api/notifications/mark-read`, {
+      const markReadResponse = await fetch(`http://localhost:3001/api/notifications/${notification._id}/read`, {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          notificationIds: [notification._id]
-        })
+          "Authorization": `Bearer ${token}`
+        }
       })
       
-      if (markReadResponse.ok) {
-        // Update local notification state
-        setNotifications(prevNotifications => 
-          prevNotifications.map(n => 
-            n._id === notification._id ? { ...n, read: true } : n
-          )
-        )
-        
-        // Update unread count
-        if (!notification.read) {
-          setUnreadCount(prevCount => Math.max(0, prevCount - 1))
-        }
+      if (!markReadResponse.ok) {
+        console.error("Failed to mark notification as read")
       }
       
-      // Navigate to the chat page with the chat ID as a parameter
-      window.location.href = `/dashboard/chats?chatId=${chatId}`
+      // Close the dropdown
+      setOpen(false)
+      
+      // Redirect to the chat page with the chat ID
+      router.push(`/dashboard/messages?chatId=${chatId}`)
     } catch (error) {
       console.error("Error opening chat:", error)
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "Failed to open chat",
         variant: "destructive"
       })
     }
@@ -377,9 +368,8 @@ export function NotificationBell() {
       const requestBody = {
         notificationId: selectedNotification._id
       }
-      console.log("Request body:", requestBody)
       
-      // Confirm the trade request
+      // Send confirmation to the API
       const response = await fetch("http://localhost:3001/api/notifications/confirm-trade", {
         method: "POST",
         headers: {
@@ -389,37 +379,53 @@ export function NotificationBell() {
         body: JSON.stringify(requestBody)
       })
       
-      console.log("Response status:", response.status)
-      
-      const data = await response.json()
-      console.log("Response data:", data)
+      console.log("Confirm trade response status:", response.status)
       
       if (response.ok) {
+        const data = await response.json()
+        console.log("Trade confirmed successfully:", data)
+        
+        // Close dialog
+        setConfirmDialogOpen(false)
+        
+        // Close dropdown
+        setOpen(false)
+        
+        // Show success message
         toast({
           title: "Trade Confirmed",
-          description: `You've confirmed the trade. You can now chat to arrange the exchange.`
+          description: "You can now chat with your trade partner"
         })
         
-        // Close the dialog
-        setConfirmDialogOpen(false)
-        setSelectedNotification(null)
-        
-        // Refresh notifications
-        fetchNotifications()
-        
-        // Redirect to the chat page
+        // Navigate to the new chat
         if (data.chatId) {
-          window.location.href = `/dashboard/chats?chatId=${data.chatId}`
+          console.log("Navigating to new chat:", data.chatId)
+          router.push(`/dashboard/messages?chatId=${data.chatId}`)
+        } else {
+          console.error("No chatId returned from API")
         }
       } else {
+        let errorMessage = "Failed to confirm trade"
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch (e) {
+          // If response is not JSON
+          const errorText = await response.text().catch(() => "")
+          if (errorText) {
+            console.error("Error response text:", errorText)
+          }
+        }
+        
+        console.error("Failed to confirm trade:", errorMessage)
         toast({
           title: "Error",
-          description: data.message || "Failed to confirm trade request",
+          description: errorMessage,
           variant: "destructive"
         })
       }
     } catch (error) {
-      console.error("Error confirming trade request:", error)
+      console.error("Error confirming trade:", error)
       toast({
         title: "Error",
         description: "An unexpected error occurred",
