@@ -110,7 +110,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mumbai_swap_dev', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://panigrahibalram16:Ping420+@cluster0.ne7hd.mongodb.net/to-domumbai_swap_dev', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
