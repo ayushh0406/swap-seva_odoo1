@@ -37,8 +37,15 @@ export default function IncomingCallHandler({ onAccept, onReject }: IncomingCall
     setSocket(newSocket)
     
     // Listen for incoming calls
-    newSocket.on("incoming-call", ({ from, name, avatar, callType }) => {
-      console.log("Incoming call from:", name)
+    newSocket.on("incoming-call", ({ from, to, name, avatar, callType }) => {
+      const currentUserId = localStorage.getItem("userId");
+      console.log("[INCOMING CALL] Event received:", { from, to, name, avatar, callType });
+      console.log("[INCOMING CALL] currentUserId:", currentUserId);
+      if (to !== currentUserId) {
+        console.log("[INCOMING CALL] Not for this user, ignoring.");
+        return;
+      }
+      console.log("[INCOMING CALL] Showing accept dialog for this user.");
       
       // Play ringtone
       const audio = new Audio("/sounds/ringtone.mp3")

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, LogIn } from "lucide-react"
+import { ArrowLeft, LogIn, Shield } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
@@ -13,6 +13,7 @@ import Image from "next/image"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isAdminLogin, setIsAdminLogin] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const [email, setEmail] = useState('')
@@ -23,7 +24,7 @@ export default function LoginPage() {
     setIsLoading(true)
   
     try {
-      console.log("Attempting login with:", { email });
+      console.log("Attempting login with:", { email, isAdminLogin });
       
       // For debugging - test if the server is responding at all
       try {
@@ -64,15 +65,21 @@ export default function LoginPage() {
         id: data.user._id,
         name: data.user.name,
         email: data.user.email,
-        avatar: data.user.avatar
+        avatar: data.user.avatar,
+        role: data.user.role
       }))
   
       toast({
         title: "Login successful!",
-        description: "Welcome back to SwapSeva.",
+        description: isAdminLogin ? "Welcome to Admin Panel." : "Welcome back to SwapSeva.",
       })
   
-      router.push("/dashboard")
+      // Redirect based on role
+      if (data.user.role === 'admin') {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (error) {
       console.error("Login error:", error)
       toast({
@@ -82,6 +89,17 @@ export default function LoginPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleAdminToggle = () => {
+    setIsAdminLogin(!isAdminLogin)
+    if (!isAdminLogin) {
+      setEmail('admin@admin.com')
+      setPassword('admin123')
+    } else {
+      setEmail('')
+      setPassword('')
     }
   }
 
@@ -105,17 +123,30 @@ export default function LoginPage() {
               className="rounded-md"
             />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {isAdminLogin ? "Admin Login" : "Welcome back"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your credentials to sign in to your account
+            {isAdminLogin 
+              ? "Enter admin credentials to access the admin panel"
+              : "Enter your credentials to sign in to your account"
+            }
           </p>
         </div>
 
         <Card>
           <form onSubmit={handleLogin}>
             <CardHeader>
-              <CardTitle>Sign In</CardTitle>
-              <CardDescription>Enter your email and password to sign in</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                {isAdminLogin && <Shield className="h-5 w-5 text-red-500" />}
+                {isAdminLogin ? "Admin Sign In" : "Sign In"}
+              </CardTitle>
+              <CardDescription>
+                {isAdminLogin 
+                  ? "Enter admin email and password to sign in"
+                  : "Enter your email and password to sign in"
+                }
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -123,7 +154,7 @@ export default function LoginPage() {
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="john@example.com" 
+                  placeholder={isAdminLogin ? "admin@admin.com" : "john@example.com"}
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                   required 
@@ -132,37 +163,52 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
+                  {!isAdminLogin && (
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  )}
                 </div>
                 <Input 
                   id="password" 
                   type="password" 
+                  placeholder={isAdminLogin ? "admin123" : ""}
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
                 />
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-3">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing In..." : "Sign In"} 
                 <LogIn className="ml-2 h-4 w-4" />
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleAdminToggle}
+              >
+                {isAdminLogin ? "Switch to User Login" : "Switch to Admin Login"}
+                <Shield className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>
           </form>
         </Card>
 
-        <div className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link href="/signup" className="underline underline-offset-4 hover:text-primary">
-            Sign up
-          </Link>
-        </div>
+        {!isAdminLogin && (
+          <div className="text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/signup" className="underline underline-offset-4 hover:text-primary">
+              Sign up
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -18,6 +18,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import skillRoutes from "./routes/skillRoutes.js";
 import interestRoutes from "./routes/interestRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 // Middleware imports
 import { authenticateUser } from "./middlewares/authMiddleware.js";
@@ -110,7 +111,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://panigrahibalram16:Ping420+@cluster0.ne7hd.mongodb.net/to-domumbai_swap_dev', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://panigrahibalram16:Ping420+@cluster0.ne7hd.mongodb.net/Swap_sewa1', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -126,6 +127,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/interests", interestRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check endpoint for Railway
 app.get("/health", (req, res) => {
@@ -218,6 +220,7 @@ io.on("connection", (socket) => {
       
       io.to(`user-${to}`).emit("incoming-call", {
         from: socket.userId,
+        to, // Add this line for callee identification
         name: user.name,
         avatar: user.avatar,
         callType

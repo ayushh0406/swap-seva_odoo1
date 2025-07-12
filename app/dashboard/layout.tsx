@@ -3,7 +3,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Bell, Home, LogOut, Map, MessageSquare, Settings, Users, Wallet, Menu, UserCircle2, ShoppingBag, Briefcase, ChevronDown, ChevronUp } from "lucide-react"
+import { Bell, Home, LogOut, Map, MessageSquare, Settings, Menu, UserCircle2, Briefcase } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -23,17 +23,9 @@ export default function DashboardLayout({
   const { toast } = useToast()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [tradingOpen, setTradingOpen] = useState(false)
 
   // Check if current path is trading related
   const isTradingPath = pathname?.includes('/dashboard/trading')
-  
-  // If path is trading related, expand the trading menu by default
-  useEffect(() => {
-    if (isTradingPath) {
-      setTradingOpen(true)
-    }
-  }, [isTradingPath])
 
   useEffect(() => {
     // Check if user is logged in
@@ -89,59 +81,22 @@ export default function DashboardLayout({
                       </Button>
                     </Link>
                     
-                    {/* Trading section dropdown for mobile */}
-                    <div className="flex flex-col">
+                    <Link href="/dashboard/trading/skills">
                       <Button 
                         variant="ghost" 
-                        className="w-full justify-between" 
-                        onClick={() => setTradingOpen(!tradingOpen)}
+                        className={`w-full justify-start gap-2 ${pathname === '/dashboard/trading/skills' ? 'bg-accent' : ''}`}
                       >
-                        <span className="flex items-center gap-2">
-                          <ShoppingBag className="h-5 w-5" />
-                          Trading
-                        </span>
-                        {tradingOpen ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
+                        <Briefcase className="h-5 w-5" />
+                        Skills Barter
                       </Button>
-                      
-                      {tradingOpen && (
-                        <div className="ml-8 flex flex-col gap-1 mt-1">
-                          <Link href="/dashboard/trading/skills">
-                            <Button 
-                              variant="ghost" 
-                              className={`w-full justify-start gap-2 ${pathname === '/dashboard/trading/skills' ? 'bg-accent' : ''}`}
-                            >
-                              <Briefcase className="h-4 w-4" />
-                              Skills Barter
-                            </Button>
-                          </Link>
-                          <Link href="/dashboard/trading/goods">
-                            <Button 
-                              variant="ghost" 
-                              className={`w-full justify-start gap-2 ${pathname === '/dashboard/trading/goods' ? 'bg-accent' : ''}`}
-                            >
-                              <ShoppingBag className="h-4 w-4" />
-                              Goods Barter
-                            </Button>
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                    </Link>
                     
                     <Link href="/dashboard/messages">
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <MessageSquare className="h-5 w-5" />
                         Messages
                       </Button>
-                    </Link>
-                    <Link href="/dashboard/community">
-                      <Button variant="ghost" className="w-full justify-start gap-2">
-                        <Users className="h-5 w-5" />
-                        Community
-                      </Button>
+                    
                     </Link>
                     <Link href="/dashboard/settings">
                       <Button variant="ghost" className="w-full justify-start gap-2">
@@ -202,47 +157,15 @@ export default function DashboardLayout({
               </Button>
             </Link>
             
-            {/* Trading section dropdown for desktop */}
-            <div className="flex flex-col">
+            <Link href="/dashboard/trading/skills">
               <Button 
                 variant="ghost" 
-                className="w-full justify-between" 
-                onClick={() => setTradingOpen(!tradingOpen)}
+                className={`w-full justify-start gap-2 ${pathname === '/dashboard/trading/skills' ? 'bg-accent' : ''}`}
               >
-                <span className="flex items-center gap-2">
-                  <ShoppingBag className="h-5 w-5" />
-                  Trading
-                </span>
-                {tradingOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
+                <Briefcase className="h-5 w-5" />
+                Skills Barter
               </Button>
-              
-              {tradingOpen && (
-                <div className="ml-8 flex flex-col gap-1 mt-1">
-                  <Link href="/dashboard/trading/skills">
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full justify-start gap-2 ${pathname === '/dashboard/trading/skills' ? 'bg-accent' : ''}`}
-                    >
-                      <Briefcase className="h-4 w-4" />
-                      Skills Barter
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/trading/goods">
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full justify-start gap-2 ${pathname === '/dashboard/trading/goods' ? 'bg-accent' : ''}`}
-                    >
-                      <ShoppingBag className="h-4 w-4" />
-                      Goods Barter
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
+            </Link>
             
             <Link href="/dashboard/messages">
               <Button variant="ghost" className="w-full justify-start gap-2">
@@ -250,25 +173,15 @@ export default function DashboardLayout({
                 Messages
               </Button>
             </Link>
-            <Link href="/dashboard/community">
+            
+            <Link href="/dashboard/settings">
               <Button variant="ghost" className="w-full justify-start gap-2">
-                <Users className="h-5 w-5" />
-                Community
+                <Settings className="h-5 w-5" />
+                Settings
               </Button>
             </Link>
+            
             <div className="mt-auto flex flex-col gap-1 py-2">
-              <Link href="/dashboard/wallet">
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Wallet className="h-5 w-5" />
-                  Wallet
-                </Button>
-              </Link>
-              <Link href="/dashboard/settings">
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Settings className="h-5 w-5" />
-                  Settings
-                </Button>
-              </Link>
               <Link href="/logout">
                 <Button variant="ghost" className="w-full justify-start gap-2 text-destructive">
                   <LogOut className="h-5 w-5" />
@@ -283,4 +196,3 @@ export default function DashboardLayout({
     </div>
   )
 }
-

@@ -58,3 +58,67 @@
   }
 }
 
+/* Neobrutalism Custom Styles */
+@layer utilities {
+  .neobrutalism-shadow {
+    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  .neobrutalism-shadow-sm {
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  .neobrutalism-shadow-lg {
+    box-shadow: 12px 12px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  .neobrutalism-shadow-white {
+    box-shadow: 6px 6px 0px 0px rgba(255, 255, 255, 1);
+  }
+  
+  .skew-x-crazy {
+    transform: skewX(-12deg);
+  }
+  
+  .rotate-crazy {
+    transform: rotate(8deg);
+  }
+  
+  .hover-lift {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateX(2px) translateY(2px);
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  /* Custom fonts for neobrutalism */
+  .font-brutal {
+    font-family: 'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Background patterns */
+  .bg-grid {
+    background-image: url("data:image/svg+xml,%3csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='grid' width='40' height='40' patternUnits='userSpaceOnUse'%3e%3cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='%23000' stroke-width='1'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23grid)' /%3e%3c/svg%3e");
+  }
+  
+  .bg-dots {
+    background-image: url("data:image/svg+xml,%3csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='dots' width='20' height='20' patternUnits='userSpaceOnUse'%3e%3ccircle cx='10' cy='10' r='2' fill='%23000'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23dots)' /%3e%3c/svg%3e");
+  }
+  
+  .bg-zigzag {
+    background-image: url("data:image/svg+xml,%3csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 20 L20 0 L40 20 L20 40 Z' fill='none' stroke='%23000' stroke-width='2'/%3e%3c/svg%3e");
+  }
+  
+  /* Text effects */
+  .text-outline {
+    text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
+  }
+  
+  .text-shadow-brutal {
+    text-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
+  }
+}

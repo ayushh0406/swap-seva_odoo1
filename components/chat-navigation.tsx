@@ -28,7 +28,7 @@ export function ChatNavigation() {
       if (!token) return
       
       setLoading(true)
-      const response = await fetch("http://localhost:3001/api/chats", {
+      const response = await fetch( `https://swapsewa-backend-1.onrender.com/api/chats`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }

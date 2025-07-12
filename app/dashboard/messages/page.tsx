@@ -646,6 +646,7 @@ export default function MessagesPage() {
                 <div className="flex items-center justify-between border-b p-4 flex-shrink-0">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      {/* Find the other participant in the chat */}
                       <AvatarImage src={activeChat.participants?.find((p: any) => p._id !== userId)?.avatar || "/placeholder.svg"} />
                       <AvatarFallback>
                         {activeChat.participants?.find((p: any) => p._id !== userId)?.name?.charAt(0) || 'U'}

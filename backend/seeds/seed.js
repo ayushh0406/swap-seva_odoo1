@@ -251,7 +251,30 @@ const seedDatabase = async () => {
     const interests = await Interest.insertMany(interestsData);
     console.log(`${interests.length} interests added`);
     
-    // Seed users (hash passwords manually since pre-save hook won't run with insertMany)
+    // Create admin user
+    const adminSalt = await bcrypt.genSalt(10);
+    const adminHashedPassword = await bcrypt.hash('admin123', adminSalt);
+    
+    await User.create({
+      name: 'Admin',
+      email: 'admin@admin.com',
+      password: adminHashedPassword,
+      role: 'admin',
+      isVerified: true,
+      avatar: '/placeholder.svg',
+      bio: 'Platform Administrator',
+      profession: 'System Administrator',
+      languages: ['English'],
+      location: {
+        type: 'Point',
+        coordinates: [72.8777, 19.0760],
+        address: 'Mumbai, India'
+      }
+    });
+    
+    console.log('Admin user created');
+    
+    // Seed regular users (hash passwords manually since pre-save hook won't run with insertMany)
     for (const userData of usersData) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
@@ -264,9 +287,10 @@ const seedDatabase = async () => {
       });
     }
     
-    console.log(`${usersData.length} users added`);
+    console.log(`${usersData.length} regular users added`);
     
     console.log('✅ Database seeded successfully');
+    console.log('Admin credentials: admin@admin.com / admin123');
     process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding database:', error);

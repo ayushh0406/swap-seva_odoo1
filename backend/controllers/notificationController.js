@@ -396,6 +396,13 @@ export const confirmTradeRequest = async (req, res) => {
       });
     }
     
+    if (initiator._id.toString() === responder._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot create a chat with yourself."
+      });
+    }
+
     // Create a chat between the two users
     const chat = new Chat({
       participants: [initiator._id, responder._id],

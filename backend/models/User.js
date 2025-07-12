@@ -11,6 +11,19 @@ const UserSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   walletAddress: String,
   createdAt: { type: Date, default: Date.now },
+  
+  // Role field for admin functionality
+  role: { 
+    type: String, 
+    enum: ['user', 'admin'], 
+    default: 'user' 
+  },
+  
+  // Account status for admin management
+  isBanned: { type: Boolean, default: false },
+  banReason: { type: String },
+  bannedAt: { type: Date },
+  bannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
   // Profile fields
   bio: { type: String, default: "" },
@@ -34,7 +47,13 @@ const UserSchema = new mongoose.Schema({
     category: { type: String },
     images: [{ type: String }],
     skillLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'expert'] },
-    availableHours: [{ day: String, startTime: String, endTime: String }]
+    availableHours: [{ day: String, startTime: String, endTime: String }],
+    // Admin moderation fields
+    isApproved: { type: Boolean, default: true },
+    isRejected: { type: Boolean, default: false },
+    rejectionReason: { type: String },
+    moderatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    moderatedAt: { type: Date }
   }],
 
   // Barter needs

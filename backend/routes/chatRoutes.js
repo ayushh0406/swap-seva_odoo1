@@ -67,6 +67,13 @@ router.post("/debug/create-test-chat", async (req, res) => {
         message: "No other user found to create test chat"
       });
     }
+
+    if (req.user._id.toString() === otherUser._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot create a chat with yourself."
+      });
+    }
     
     // Create test chat
     const chat = new Chat({
